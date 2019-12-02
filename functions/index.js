@@ -16,17 +16,24 @@ app.get('/screams', (req,res)=>{
   .firestore()
   .collection("screams")
   .get()
-  .then(data => {
+  .then((data) => {
     let screams = [];
-    data.forEach(doc => {
-      screams.push(doc.data());
+    data.forEach((doc) => {
+      screams.push({
+        screamId: doc.id,
+        body: doc.data().body,
+        userHandle: doc.data().userHandle,
+        createdAt: doc.data().createdAt
+      });
     });
     return res.json(screams);
   })
   .catch(err => console.error(err));
-})
+}) 
 
-exports.createScream = functions.https.onRequest((req, res) => {
+
+
+app.post('/scream',(req, res) => {
   const newScream = {
     body: req.body.body,
     userHandle: req.body.userHandle,
@@ -46,4 +53,6 @@ exports.createScream = functions.https.onRequest((req, res) => {
     });
 });
 
+//setting up api\
+//https://us-central1-socialsneakers.cloudfunctions.net/api
 exports.api = functions.https.onRequest(app);
