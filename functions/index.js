@@ -1,3 +1,9 @@
+//notes, The following worked for me, and the order of commands is important. 
+//1. npm install firebase --save
+//2. npm install firebase-admin --save
+
+
+
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const serviceAccount = require("./serviceAccountKey.json");
@@ -15,17 +21,19 @@ const firebaseConfig = {
   measurementId: "G-7YFPZ3KJ9C"
 };
 
-// admin.initializeApp({
-//   credential: admin.credential.cert(serviceAccount),
-//   databaseURL: "https://socialsneakers.firebaseio.com"
-// });
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: "https://socialsneakers.firebaseio.com"
+});
 
 const express = require('express');
 const app = express();
+
 const firebase = require('firebase');
+
 firebase.initializeApp(firebaseConfig);
 
-
+const db = admin.firestore();
 
 
 
@@ -33,8 +41,7 @@ firebase.initializeApp(firebaseConfig);
 
 
 app.get('/screams', (req,res)=>{
-  admin
-  .firestore()
+  db
   .collection("screams")
   .orderBy('createdAt','desc')
   .get()
@@ -62,8 +69,7 @@ app.post('/scream',(req, res) => {
     createdAt: new Date().toISOString()
   };
 
-  admin
-    .firestore()
+ db
     .collection("screams")
     .add(newScream)
     .then(doc => {
@@ -85,20 +91,37 @@ app.post('/signup', (req,res) =>{
     confirmPassword:req.body.confirmPassword,
     handle:req.body.handle,
   };
-  firebase.auth().createUserWithEmailAndPassword(newUser.email, newUser.password)
-    .then(data => {
-      return res.status(201).json({message: `user ${data.user.uid} signed up successfully`})
+
+  db.doc(`/users/${newUser.handle}`).get()
+    .then(doc =>{
+      if(doc.exists){
+        return res.status(400).json({handle: 'this handle is already taken'});
+      } else {
+        return firebase.auth().createUserWithEmailAndPassword(newUser.email, newUser.password)
+      }
     })
-    .catch(err =>{
+    //authen token
+    .then(data => {
+      return data.user.getIdToken();
+      
+    })
+    .then(token =>{
+      return res.status(201).json({token});
+    })
+    .catch(err=>{
       console.error(err);
       return res.status(500).json({error:err.code})
     })
+
+
+  
 })
 
 
 
 
 //setting up api\
+
 //https://us-central1-socialsneakers.cloudfunctions.net/api
 exports.api = functions.https.onRequest(app);
  
