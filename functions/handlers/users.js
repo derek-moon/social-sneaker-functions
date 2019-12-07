@@ -134,5 +134,8 @@ exports.signup = (req,res) =>{
         return res.status(500).json({error: err.code})
       })
     })
-    busboy.end(req.rawBody);
+    busboy.end(req.rawBody)
   }
+
+  //type here
+
