@@ -8,7 +8,12 @@ const app = express();
 
 const FBAuth = require('./util/fbAuth');
 
-const {getAllScreams,postOneScream, getScream} = require('./handlers/screams');
+const {
+    getAllScreams,
+    postOneScream, 
+    getScream,
+    commentOnScream
+} = require('./handlers/screams');
 const {
     signup,
     login,
@@ -33,7 +38,7 @@ app.get('/user',FBAuth, getAuthenticatedUser)
 // todo delete scream
 // todo like scream
 // todo unlike scream
-// todo comment scream
+app.post('/scream/:screamId/comment', FBAuth, commentOnScream)
 
 
 //setting up api
