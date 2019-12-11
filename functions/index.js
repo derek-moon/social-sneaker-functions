@@ -4,6 +4,7 @@
 
 const functions = require("firebase-functions");
 const express = require('express');
+const {db} = require('./util/admin');
 const app = express();
 
 const FBAuth = require('./util/fbAuth');
@@ -57,3 +58,79 @@ app.post('/scream/:screamId/comment', FBAuth, commentOnScream)
 //https://us-central1-socialsneakers.cloudfunctions.net/api
 exports.api = functions.https.onRequest(app);
  
+
+
+
+
+
+// has access to like document in firebase
+exports.createNotificationOnLike = functions.firestore.document('likes/{id}')
+    .onCreate((snapshot) => {
+        db.doc(`/screams/${snapshot.data().screamId}`)
+        .get()
+        .then(doc => {
+            if(doc.exists){
+                return db.doc(`/notifications/${snapshot.id}`).set({
+                    createdAt: new Date().toISOString(),
+                    recipient: doc.data().userHandle,
+                    sender: snapshot.data().userHandle,
+                    type:'like',
+                    read: false,
+                    screamId: doc.id
+                });
+            }
+        })
+        .then(() =>{
+            return;
+        })
+        .catch(err => {
+            console.error(err);
+            return;
+        });
+    });
+
+    //deletes notification on unlike 
+    exports.deleteNotificationOnUnlike = functions
+    .firestore.document('likes/{id}')
+    .onDelete((snapshot) => {
+        db.doc(`/notifications/${snapshot.id}`)
+        .delete()
+        .then(() => {
+            return;
+        })
+        .catch(err => {
+            console.error(err);
+            return;
+        })
+    })
+
+
+
+    //comment notifications
+    exports.createNotificationOnComment = functions
+    .firestore
+    .document('comments/{id}')
+    .onCreate((snapshot) => {
+        db.doc(`/screams/${snapshot.data().screamId}`)
+        .get()
+        .then(doc => {
+            if(doc.exists){
+                return db.doc(`/notifications/${snapshot.id}`).set({
+                    createdAt: new Date().toISOString(),
+                    recipient: doc.data().userHandle,
+                    sender: snapshot.data().userHandle,
+                    type:'comment',
+                    read: false,
+                    screamId: doc.id
+                });
+            }
+        })
+        .then(() =>{
+            return;
+        })
+        .catch(err => {
+            console.error(err);
+            return;
+        });
+    })
+
