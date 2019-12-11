@@ -108,6 +108,44 @@ exports.signup = (req,res) =>{
       })
   }
 
+  //get any user details
+  exports.getUserDetails = (req,res) => {
+    let userData = {};
+    db.doc(`/users/${req.params.handle}`).get()
+    .then(doc => {
+      if(doc.exists){
+        userData.user = doc.data();
+        return db.collection('screams').where('userHandle', '==', req.params.handle)
+        .orderBy('createdAt','desc')
+        .get();
+      } else {
+        return res.status(404).json({error: 'User not found'})
+      }
+    })
+    .then(data => {
+      userData.screams = [];
+      data.forEach( doc =>{
+        userData.screams.push({
+          body: doc.data().body,
+          createdAt: doc.data().createdAt,
+          userHandle: doc.data().userHandle,
+          userImage: doc.data().userImage,
+          likeCount: doc.data().likeCount,
+          commentCount: doc.data().commentCount,
+          screamId: doc.id
+        })
+      });
+      return res.json(userData);
+    })
+    .catch(err =>{
+      console.error(err)
+      return res.status(500).json({error:err.code});
+    })
+  }
+
+  //get own user details
+
+
 
   //Get own user details
   exports.getAuthenticatedUser = (req,res) => {
@@ -198,5 +236,20 @@ exports.signup = (req,res) =>{
     busboy.end(req.rawBody)
   }
 
-  //type here
+  exports.markNotificationsRead = (req,res) => {
+    //bacth write to update multiple docs
+    let batch = db.batch();
+    req.body.forEach(notificationId => {
+      const notification = db.doc(`/notifications/${notificationId}`)
+      batch.update(notification,{read:true});
+    });
+    batch.commit()
+    .then(() =>{
+      return res.json({message: 'Notifications marked read'})
+    })
+    .catch(err => {
+      console.error(err);
+      return res.status(500).json({error: err.code});
+    })
 
+  }

@@ -18,12 +18,15 @@ const {
     unlikeScream,
     deleteScream 
 } = require('./handlers/screams');
+
 const {
     signup,
     login,
     uploadImage,
     addUserDetails,
-    getAuthenticatedUser
+    getAuthenticatedUser,
+    getUserDetails,
+    markNotificationsRead
 } = require('./handlers/users');
 
 
@@ -38,6 +41,8 @@ app.post('/login', login);
 app.post('/user/image', FBAuth,uploadImage);
 app.post('/user',FBAuth, addUserDetails);
 app.get('/user',FBAuth, getAuthenticatedUser)
+app.get('/user/:handle', getUserDetails);
+app.post('/notifications', FBAuth,markNotificationsRead);
 
 
 //delete scream
@@ -58,9 +63,6 @@ app.post('/scream/:screamId/comment', FBAuth, commentOnScream)
 //https://us-central1-socialsneakers.cloudfunctions.net/api
 exports.api = functions.https.onRequest(app);
  
-
-
-
 
 
 // has access to like document in firebase
